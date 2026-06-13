@@ -1,0 +1,232 @@
+{
+  "name": "gmail reply Autamation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b818629c-532e-4681-a8d6-6e14b01854c6",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=I want you to draft an email reply in a very proffesional way\n\nright now i'm not open for promotions or collabrations but im open for meetings and projects discussions as well\ni want to reply this email :  {{ $json.from.text }}\n  i want to you to draft the reply and give me only body i don't want you to give any subject line or anything just give me body text.\nmy name is B Rabbani",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "aff0549e-e893-46de-9fcc-9359c4b6e93f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "filters": {
+          "labelIds": [
+            "UNREAD"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "f6d96c4d-601c-4786-9943-85f9ae0d02a6",
+      "name": "Gmail All mails",
+      "webhookId": "983b003a-1e90-48f1-bcd9-c86a7ba91307",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jHATw6wxcR6NLj2R",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.threadId }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "a94202de-8815-48f1-86b3-cd2a2f8c9b62",
+      "name": "Gmail All Details",
+      "webhookId": "e80be343-2062-41b2-855b-86bd29bd17b6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jHATw6wxcR6NLj2R",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail All Details').item.json.From }}",
+        "subject": "={{ $('Gmail All Details').item.json.Subject }}",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        0
+      ],
+      "id": "c41a27ae-ca48-4818-bfb3-e40e51d56267",
+      "name": "Send a message",
+      "webhookId": "7fd17995-ecf1-479c-9653-11dd0aa90cdf",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jHATw6wxcR6NLj2R",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Gmail All Details').item.json.threadId }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "19a11179-a904-4790-89cc-3be2bc319696",
+      "name": "Mark a message as read",
+      "webhookId": "c416088f-2f7a-4df4-a122-601e12fc6c82",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jHATw6wxcR6NLj2R",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        496,
+        208
+      ],
+      "id": "37c3b7b0-f18f-415b-b0ba-6eb1649b58c6",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "PwGI6OZcVQLwkwqd",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Gmail All mails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail All mails": {
+      "main": [
+        [
+          {
+            "node": "Gmail All Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail All Details": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Mark a message as read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "032c1f84-2edf-42c7-9900-9381a03c1c8a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "81c5aef2e4d6d9cc7c85ca57ae3ab870ee0946167743b9ba46a220821189de5c"
+  },
+  "id": "GWL9pFgU7RoEg3W4",
+  "tags": []
+}
